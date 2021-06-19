@@ -9,10 +9,14 @@ import lombok.Getter;
 
 public abstract class CommandProvider {
 
-    @Getter protected String version;
+    protected String version;
     protected Map<CommandName, Tuple2<Command, Request>> commands;
 
     protected abstract Option<Command> provide(String commandName);
 
     protected abstract Try<Request> deserialize(JsonNode command, String commandName);
+
+    public String getVersion() {
+        return version;
+    }
 }
