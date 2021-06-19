@@ -18,6 +18,10 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
+tasks.named('compileJava') {
+    options.javaModuleVersion = provider { project.version }
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
