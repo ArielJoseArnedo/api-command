@@ -5,7 +5,9 @@ import co.com.ajac.domain.errors.AppError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.vavr.collection.List;
+import io.vavr.control.Either;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 import org.apache.commons.lang3.StringUtils;
 
 public interface CommandUtil {
@@ -34,11 +36,23 @@ public interface CommandUtil {
         );
     }
 
+    default FutureEither<AppError, Request> findRequest(Option<String> commandNameOpt, Option<JsonNode> commandBodyOpt, CommandProvider commandProvider) {
+        return FutureEither.fromEither(commandNameOpt
+          .toEither((AppError) CommandError.COMMAND_NOT_FOUND)
+          .flatMap(commandName ->
+            commandBodyOpt
+              .toEither((AppError) CommandError.COMMAND_REQUEST_NOT_FOUND)
+              .map(commandBody -> commandProvider.deserialize(commandBody, commandName))
+          )
+          .flatMap(tryRequest -> tryRequest.toEither(CommandError.COMMAND_REQUEST_NOT_DESERIALIZED))
+        );
+    }
+
     default JsonNode makeResponseError(AppError appError) {
         final JsonNodeFactory factory = JsonNodeFactory.instance;
         return factory.objectNode()
           .put("code", appError.code())
-          .put("causal",appError.message())
+          .put("causal", appError.message())
           .put("description", appError.description());
     }
 }
