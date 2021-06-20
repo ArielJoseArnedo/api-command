@@ -25,9 +25,9 @@ public interface CommandUtil {
         );
     }
 
-    default FutureEither<AppError, Command> findCommand(Option<CommandName> commandNameOpt, CommandProvider commandProvider) {
+    default FutureEither<AppError, Command> findCommand(Option<String> commandNameOpt, CommandProvider commandProvider) {
         return FutureEither.fromEither(commandNameOpt
-          .flatMap(commandName -> commandProvider.provide(commandName.getName()))
+          .flatMap(commandProvider::provide)
           .toEither(CommandError.COMMAND_NOT_IMPLEMENTED)
         );
     }
