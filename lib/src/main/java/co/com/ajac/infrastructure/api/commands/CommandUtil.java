@@ -2,6 +2,8 @@ package co.com.ajac.infrastructure.api.commands;
 
 import co.com.ajac.concurrency.FutureEither;
 import co.com.ajac.domain.errors.AppError;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.vavr.collection.List;
 import io.vavr.control.Option;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +32,14 @@ public interface CommandUtil {
           .flatMap(commandProvider::provide)
           .toEither(CommandError.COMMAND_NOT_IMPLEMENTED)
         );
+    }
+
+    default JsonNode makeResponseError(AppError appError) {
+        final JsonNodeFactory factory = JsonNodeFactory.instance;
+        return factory.objectNode()
+          .put("code", appError.code())
+          .put("causal",appError.message())
+          .put("description", appError.description());
     }
 }
 
