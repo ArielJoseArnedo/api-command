@@ -5,7 +5,6 @@ import io.vavr.Tuple2;
 import io.vavr.collection.Map;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
-import lombok.Getter;
 
 public abstract class CommandProvider {
 
