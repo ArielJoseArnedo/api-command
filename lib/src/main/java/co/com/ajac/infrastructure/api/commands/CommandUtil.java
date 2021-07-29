@@ -1,13 +1,11 @@
 package co.com.ajac.infrastructure.api.commands;
 
+import co.com.ajac.base.errors.AppError;
 import co.com.ajac.concurrency.FutureEither;
-import co.com.ajac.domain.errors.AppError;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.vavr.collection.List;
-import io.vavr.control.Either;
 import io.vavr.control.Option;
-import io.vavr.control.Try;
 import org.apache.commons.lang3.StringUtils;
 
 public interface CommandUtil {
