@@ -1,10 +1,10 @@
 package co.com.ajac.infrastructure.api.commands;
 
 
-import co.com.ajac.base.events.Publisher;
+import co.com.ajac.messaging.publishers.PublisherProvider;
 import io.vavr.collection.List;
 
 public interface Processor {
     List<CommandProvider> commandProviders();
-    Publisher publisher();
+    PublisherProvider publisher();
 }
