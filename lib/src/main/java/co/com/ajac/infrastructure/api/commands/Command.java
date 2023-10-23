@@ -1,7 +1,7 @@
 package co.com.ajac.infrastructure.api.commands;
 
 import co.com.ajac.base.errors.AppError;
-import co.com.ajac.base.events.Event;
+import co.com.ajac.messaging.events.Event;
 import co.com.ajac.concurrency.FutureEither;
 
 import io.vavr.Tuple2;
