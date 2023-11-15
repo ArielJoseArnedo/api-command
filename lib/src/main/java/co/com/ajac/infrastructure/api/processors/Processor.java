@@ -6,6 +6,6 @@ import co.com.ajac.messaging.publishers.PublisherProvider;
 import io.vavr.collection.List;
 
 public non-sealed interface Processor extends ProcessorUtil {
-    List<ControllerProvider> commandProviders();
+    List<ControllerProvider> controllerProviders();
     PublisherProvider publisher();
 }
