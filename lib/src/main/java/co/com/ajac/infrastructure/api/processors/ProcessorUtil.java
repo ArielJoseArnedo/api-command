@@ -1,46 +1,53 @@
-package co.com.ajac.infrastructure.api.commands;
+package co.com.ajac.infrastructure.api.processors;
 
 import co.com.ajac.base.errors.AppError;
 import co.com.ajac.concurrency.FutureEither;
+import co.com.ajac.infrastructure.api.commands.Command;
+import co.com.ajac.infrastructure.api.commands.CommandError;
+import co.com.ajac.infrastructure.api.commands.Request;
+import co.com.ajac.infrastructure.api.controllers.ControllerProvider;
+import co.com.ajac.infrastructure.api.controllers.ControllerType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.vavr.collection.List;
 import io.vavr.control.Option;
 import org.apache.commons.lang3.StringUtils;
 
-public interface CommandUtil {
+sealed interface ProcessorUtil permits Processor {
 
     default List<String> splitUrlPath(String path) {
         return List.of(StringUtils.split(path, '/'));
     }
 
-    default Option<String> findVersionFromTagsUrl(List<String> tagsUtl) {
-        return tagsUtl.headOption();
+    default Option<ControllerType> findControllerType(List<String> tagsUtl) {
+        return tagsUtl.headOption()
+          .map(ControllerType::get);
     }
 
-    default FutureEither<AppError, CommandProvider> findProvider(Option<String> pathOpt, List<CommandProvider> commandProviders) {
+    default FutureEither<AppError, ControllerProvider> findProvider(Option<String> pathOpt, List<ControllerProvider> commandProviders) {
         return FutureEither.fromEither(pathOpt
           .map(this::splitUrlPath)
-          .flatMap(this::findVersionFromTagsUrl)
-          .flatMap(tagVersion -> commandProviders.find(commandProvider -> commandProvider.getVersion().equals(tagVersion)))
+          .flatMap(this::findControllerType)
+          .flatMap(controllerType -> commandProviders
+            .find(controllerProvider -> controllerProvider.getType().equals(controllerType)))
           .toEither(CommandError.COMMAND_PROVIDER_NOT_FOUND)
         );
     }
 
-    default FutureEither<AppError, Command> findCommand(Option<String> commandNameOpt, CommandProvider commandProvider) {
+    default FutureEither<AppError, Command> findCommand(Option<String> commandNameOpt, ControllerProvider controllerProvider) {
         return FutureEither.fromEither(commandNameOpt
-          .flatMap(commandProvider::provide)
+          .flatMap(controllerProvider::provide)
           .toEither(CommandError.COMMAND_NOT_IMPLEMENTED)
         );
     }
 
-    default FutureEither<AppError, Request> findRequest(Option<String> commandNameOpt, Option<JsonNode> commandBodyOpt, CommandProvider commandProvider) {
+    default FutureEither<AppError, Request> findRequest(Option<String> commandNameOpt, Option<JsonNode> commandBodyOpt, ControllerProvider controllerProvider) {
         return FutureEither.fromEither(commandNameOpt
           .toEither((AppError) CommandError.COMMAND_NOT_FOUND)
           .flatMap(commandName ->
             commandBodyOpt
               .toEither((AppError) CommandError.COMMAND_REQUEST_NOT_FOUND)
-              .map(commandBody -> commandProvider.deserialize(commandBody, commandName))
+              .map(commandBody -> controllerProvider.deserialize(commandBody, commandName))
           )
           .flatMap(tryRequest -> tryRequest.toEither(CommandError.COMMAND_REQUEST_NOT_DESERIALIZED))
         );
