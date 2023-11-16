@@ -24,11 +24,11 @@ sealed interface ProcessorUtil permits Processor {
           .map(ControllerType::get);
     }
 
-    default FutureEither<AppError, ControllerProvider> findProvider(Option<String> pathOpt, List<ControllerProvider> commandProviders) {
+    default FutureEither<AppError, ControllerProvider> findController(Option<String> pathOpt, List<ControllerProvider> controllerProviders) {
         return FutureEither.fromEither(pathOpt
           .map(this::splitUrlPath)
           .flatMap(this::findControllerType)
-          .flatMap(controllerType -> commandProviders
+          .flatMap(controllerType -> controllerProviders
             .find(controllerProvider -> controllerProvider.getType().equals(controllerType)))
           .toEither(CommandError.COMMAND_PROVIDER_NOT_FOUND)
         );
