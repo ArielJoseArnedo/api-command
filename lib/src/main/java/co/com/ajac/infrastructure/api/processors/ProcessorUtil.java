@@ -15,50 +15,52 @@ import org.apache.commons.lang3.StringUtils;
 
 sealed interface ProcessorUtil permits Processor {
 
-    default List<String> splitUrlPath(String path) {
-        return List.of(StringUtils.split(path, '/'));
-    }
+  default List<String> splitUrlPath(String path) {
+    return List.of(StringUtils.split(path, '/'));
+  }
 
-    default Option<ControllerType> findControllerType(List<String> tagsUtl) {
-        return tagsUtl.headOption()
-          .map(ControllerType::get);
-    }
+  default Option<ControllerType> findControllerType(List<String> tagsUtl) {
+    return tagsUtl
+        .map(ControllerType::get)
+        .filter(controllerType -> !controllerType.equals(ControllerType.UNKNOWN))
+        .headOption();
+  }
 
-    default FutureEither<AppError, ControllerProvider> findController(Option<String> pathOpt, List<ControllerProvider> controllerProviders) {
-        return FutureEither.fromEither(pathOpt
-          .map(this::splitUrlPath)
-          .flatMap(this::findControllerType)
-          .flatMap(controllerType -> controllerProviders
+  default FutureEither<AppError, ControllerProvider> findController(Option<String> pathOpt, List<ControllerProvider> controllerProviders) {
+    return FutureEither.fromEither(pathOpt
+        .map(this::splitUrlPath)
+        .flatMap(this::findControllerType)
+        .flatMap(controllerType -> controllerProviders
             .find(controllerProvider -> controllerProvider.getType().equals(controllerType)))
-          .toEither(CommandError.COMMAND_PROVIDER_NOT_FOUND)
-        );
-    }
+        .toEither(CommandError.COMMAND_PROVIDER_NOT_FOUND)
+    );
+  }
 
-    default FutureEither<AppError, Command> findCommand(Option<String> commandNameOpt, ControllerProvider controllerProvider) {
-        return FutureEither.fromEither(commandNameOpt
-          .flatMap(controllerProvider::provide)
-          .toEither(CommandError.COMMAND_NOT_IMPLEMENTED)
-        );
-    }
+  default FutureEither<AppError, Command> findCommand(Option<String> commandNameOpt, ControllerProvider controllerProvider) {
+    return FutureEither.fromEither(commandNameOpt
+        .flatMap(controllerProvider::provide)
+        .toEither(CommandError.COMMAND_NOT_IMPLEMENTED)
+    );
+  }
 
-    default FutureEither<AppError, Request> findRequest(Option<String> commandNameOpt, Option<JsonNode> commandBodyOpt, ControllerProvider controllerProvider) {
-        return FutureEither.fromEither(commandNameOpt
-          .toEither((AppError) CommandError.COMMAND_NOT_FOUND)
-          .flatMap(commandName ->
+  default FutureEither<AppError, Request> findRequest(Option<String> commandNameOpt, Option<JsonNode> commandBodyOpt, ControllerProvider controllerProvider) {
+    return FutureEither.fromEither(commandNameOpt
+        .toEither((AppError) CommandError.COMMAND_NOT_FOUND)
+        .flatMap(commandName ->
             commandBodyOpt
-              .toEither((AppError) CommandError.COMMAND_REQUEST_NOT_FOUND)
-              .map(commandBody -> controllerProvider.deserialize(commandBody, commandName))
-          )
-          .flatMap(tryRequest -> tryRequest.toEither(CommandError.COMMAND_REQUEST_NOT_DESERIALIZED))
-        );
-    }
+                .toEither((AppError) CommandError.COMMAND_REQUEST_NOT_FOUND)
+                .map(commandBody -> controllerProvider.deserialize(commandBody, commandName))
+        )
+        .flatMap(tryRequest -> tryRequest.toEither(CommandError.COMMAND_REQUEST_NOT_DESERIALIZED))
+    );
+  }
 
-    default JsonNode makeResponseError(AppError appError) {
-        final JsonNodeFactory factory = JsonNodeFactory.instance;
-        return factory.objectNode()
-          .put("code", appError.code())
-          .put("causal", appError.message())
-          .put("description", appError.description());
-    }
+  default JsonNode makeResponseError(AppError appError) {
+    final JsonNodeFactory factory = JsonNodeFactory.instance;
+    return factory.objectNode()
+        .put("code", appError.code())
+        .put("causal", appError.message())
+        .put("description", appError.description());
+  }
 }
 
